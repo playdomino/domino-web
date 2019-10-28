@@ -1,0 +1,39 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+  branches:
+    include:
+    - master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+
+- task: Bash@3
+  displayName: Docker Login
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker login docker.pkg.github.com --username bryht -p $(token)
+- task: Bash@3
+  displayName: Docker Build
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker build -t docker.pkg.github.com/playdomino/domino-web/domino-web:dev .
+- task: Bash@3
+  displayName: Docker Publish
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker push docker.pkg.github.com/playdomino/domino-web/domino-web:dev
+
+
+
