@@ -1,6 +1,8 @@
 import { 
 	StandardMaterial,
-	Texture,
+    Texture,
+    CubeTexture,
+    Color3,
 } from '@babylonjs/core';
 
 
@@ -59,3 +61,17 @@ export const getGrassMaterial = (scene, textureScale) => {
 
     return bumpMaterial;
 };
+
+export const getSkyBoxMaterial = (scene) => {
+    const roughnessTexture = require('../assets/materials/sky/Sky-1.jpg');
+
+    const skyboxMaterial = new StandardMaterial("skyBox", scene);
+    
+	skyboxMaterial.backFaceCulling = false;
+	skyboxMaterial.reflectionTexture = new Texture(roughnessTexture, scene);
+	skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
+	skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
+	skyboxMaterial.specularColor = new Color3(0, 0, 0);
+    
+    return skyboxMaterial;
+}

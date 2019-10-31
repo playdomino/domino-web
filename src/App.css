@@ -20,3 +20,11 @@
 .App-link {
   color: #09d3ac;
 }
+
+.fps-counter {
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  color: white;
+  font-size: 24px;
+}
