@@ -50,10 +50,10 @@ class SceneLoader extends React.Component {
 		light2.intensity = 0.5;
 
 		// Our built-in 'sphere' shape. Params: name, subdivs, size, scene
-		const sphere1 = Mesh.CreateSphere("sphere1", 48, 1, scene, true);
-		sphere1.applyDisplacementMap(rockDisplacement, 0.1, 0.8);
-		const sphere2 = Mesh.CreateSphere("sphere2", 48, 1, scene, true);
-		sphere2.applyDisplacementMap(rockDisplacement, 0.1, 0.8);
+		const sphere1 = Mesh.CreateSphere("sphere1", 60, 1, scene, true);
+		sphere1.applyDisplacementMap(rockDisplacement, 0, 0.8);
+		const sphere2 = Mesh.CreateSphere("sphere2", 60, 1, scene, true);
+		sphere2.applyDisplacementMap(rockDisplacement, 0, 0.8);
 
 		sphere1.material = getRockMaterial(scene, 3);
 		sphere2.material = getRockMaterial(scene, 3);
