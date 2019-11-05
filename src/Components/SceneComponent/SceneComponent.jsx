@@ -10,8 +10,8 @@ class SceneComponent extends React.Component {
     super(props);
 
     this.state = {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight,
     };
   }
 
@@ -52,8 +52,8 @@ class SceneComponent extends React.Component {
 
   onResizeWindow = (e) => {
     this.setState({ 
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight,
     });
 
     if (this.engine) {

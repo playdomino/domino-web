@@ -1,11 +1,15 @@
 import * as React from 'react';
+import '@babylonjs/inspector';
 import { 
 	FreeCamera,
+	ArcRotateCamera,
 	Vector3,
 	HemisphericLight,
 	Mesh,
 	ShadowGenerator,
 	DirectionalLight,
+	ActionManager,
+	ExecuteCodeAction,
 } from '@babylonjs/core';
 
 import SceneComponent from '../SceneComponent/SceneComponent'; // import the component above linking to file we just created.
@@ -16,8 +20,8 @@ import {
 	getSkyBoxMaterial,
 } from '../../Materials/materials';
 
-const grassDisplacement = require('../../assets/materials/grass/Grass_001_DISP.png');
-const rockDisplacement = require('../../assets/materials/rock/Rock_028_DISP.png');
+const grassDisplacement = require('../../assets/textures/grass/Grass_001_DISP.png');
+const rockDisplacement = require('../../assets/textures/rock/Rock_028_DISP.png');
 
 class SceneLoader extends React.Component {
 	constructor(props) {
@@ -31,14 +35,23 @@ class SceneLoader extends React.Component {
 	onSceneMount = (e) => {
 		const { canvas, scene, engine } = e;
 
+		// scene.debugLayer.show({ overlay: true, showInspector: true });
+
 		// This creates and positions a free camera (non-mesh)
-		const camera = new FreeCamera("camera1", new Vector3(0, 5, -10), scene);
+		// const camera = new FreeCamera("camera1", new Vector3(0, 5, -20), scene);
 
 		// This targets the camera to scene origin
-		camera.setTarget(Vector3.Zero());
+		// camera.setTarget(Vector3.Zero());
+
+		// Parameters: alpha, beta, radius, target position, scene
+		var camera = new ArcRotateCamera("camera1", 0, 20, 40, new Vector3(0, 0, 0), scene);
+
+		// Positions the camera overwriting alpha, beta, radius
+
+		camera.setPosition(new Vector3(-15, 20, -15));
 
 		// This attaches the camera to the canvas
-		camera.attachControl(canvas, true);
+		camera.attachControl(canvas, true, true);
 
 		// This creates a light, aiming 0,1,0 - to the sky (non-mesh)
 		const light = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
@@ -76,8 +89,81 @@ class SceneLoader extends React.Component {
 		shadowGenerator.getShadowMap().renderList.push(sphere2);
 
 		const skybox = Mesh.CreateBox("skyBox", 1000.0, scene);
-        skybox.disableLighting = true;
+		skybox.disableLighting = true;
+		skybox.infiniteDistance = true;
 		skybox.material = getSkyBoxMaterial(scene);
+
+		// physics
+		scene.gravity = new Vector3(0, -9.81, 0);
+		scene.collisionsEnabled = true;
+		
+		// collisions
+		ground.checkCollisions = true;
+		camera.checkCollisions = true;
+		sphere1.checkCollisions = true;
+		sphere2.checkCollisions = true;
+
+		let cameraForwardRayPosition = camera.getForwardRay().direction;
+
+		scene.registerBeforeRender(function() {
+			cameraForwardRayPosition = camera.getForwardRay().direction;
+		});
+
+		// control
+		let wPress = new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: "w"
+			},
+			() => { 
+				sphere1.position.x += cameraForwardRayPosition.x + 1;
+				sphere1.position.z += cameraForwardRayPosition.z + 1;
+			}
+		)
+
+		let aPress = new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: "a"
+			},
+			() => { 
+				sphere1.position.z += 1;
+			}
+		)
+
+		let sPress = new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: "s"
+			},
+			() => { 
+				sphere1.position.x += cameraForwardRayPosition.x - 1;
+				sphere1.position.z += cameraForwardRayPosition.z - 1;
+			}
+		)
+
+		let dPress = new ExecuteCodeAction(
+			{
+				trigger: ActionManager.OnKeyDownTrigger,
+				parameter: "d"
+			},
+			() => sphere1.position.z -= 1,
+		)
+		
+		window.addEventListener("keypress", (event) => {
+			if (event.key === "w") {
+				wPress.execute();
+			}
+			if (event.key === "a") {
+				aPress.execute();
+			}
+			if (event.key === "s") {
+				sPress.execute();
+			}
+			if (event.key === "d") {
+				dPress.execute();
+			}
+		});
 
 		engine.runRenderLoop(() => {
 			if (scene) {
@@ -92,12 +178,10 @@ class SceneLoader extends React.Component {
 			fpsCounter,
 		} = this.state;   
 
-		return (
-			<div>
-				<div className="fps-counter">{fpsCounter}</div>
-				<SceneComponent onSceneMount={this.onSceneMount} />
-			</div>
-		)
+		return <>
+			<div className="fps-counter">{fpsCounter}</div>
+			<SceneComponent onSceneMount={this.onSceneMount} />
+		</>
 	}
 }
 

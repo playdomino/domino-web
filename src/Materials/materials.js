@@ -3,16 +3,17 @@ import {
     Texture,
     CubeTexture,
     Color3,
+    Vector3,
 } from '@babylonjs/core';
 
 
 export const getRockMaterial = (scene, textureScale, mode) => {
     textureScale = textureScale || 1;
 
-    const diffuseTexture = require('../assets/materials/rock/Rock_028_COLOR.jpg');
-    const bumpTexture = require('../assets/materials/rock/Rock_028_NORM.jpg');
-    const occTexture = require('../assets/materials/rock/Rock_028_OCC.jpg');
-    const roughnessTexture = require('../assets/materials/rock/Rock_028_ROUGH.jpg');
+    const diffuseTexture = require('../assets/textures/rock/Rock_028_COLOR.jpg');
+    const bumpTexture = require('../assets/textures/rock/Rock_028_NORM.jpg');
+    const occTexture = require('../assets/textures/rock/Rock_028_OCC.jpg');
+    const roughnessTexture = require('../assets/textures/rock/Rock_028_ROUGH.jpg');
 
     const bumpMaterial = new StandardMaterial("rockMaterial", scene);
 
@@ -39,10 +40,10 @@ export const getRockMaterial = (scene, textureScale, mode) => {
 export const getGrassMaterial = (scene, textureScale) => {
     textureScale = textureScale || 1;
 
-    const diffuseTexture = require('../assets/materials/grass/Grass_001_COLOR.jpg');
-    const bumpTexture = require('../assets/materials/grass/Grass_001_NORM.jpg');
-    const occTexture = require('../assets/materials/grass/Grass_001_OCC.jpg');
-    const roughnessTexture = require('../assets/materials/grass/Grass_001_ROUGH.jpg');
+    const diffuseTexture = require('../assets/textures/grass/Grass_001_COLOR.jpg');
+    const bumpTexture = require('../assets/textures/grass/Grass_001_NORM.jpg');
+    const occTexture = require('../assets/textures/grass/Grass_001_OCC.jpg');
+    const roughnessTexture = require('../assets/textures/grass/Grass_001_ROUGH.jpg');
 
     const bumpMaterial = new StandardMaterial("grassMaterial", scene);
 
@@ -63,12 +64,30 @@ export const getGrassMaterial = (scene, textureScale) => {
 };
 
 export const getSkyBoxMaterial = (scene) => {
-    const roughnessTexture = require('../assets/materials/sky/Sky-1.jpg');
-
-    const skyboxMaterial = new StandardMaterial("skyBox", scene);
+    const skyboxMaterial = new StandardMaterial("skyMaterial", scene);
+    const diffuseTexture = require('../assets/textures/sky/sky_cube.jpg');
+    const pxTexture = require('../assets/textures/sky/sky_cube_px.jpg');
+    const pyTexture = require('../assets/textures/sky/sky_cube_py.jpg');
+    const pzTexture = require('../assets/textures/sky/sky_cube_pz.jpg');
+    const nxTexture = require('../assets/textures/sky/sky_cube_nx.jpg');
+    const nyTexture = require('../assets/textures/sky/sky_cube_ny.jpg');
+    const nzTexture = require('../assets/textures/sky/sky_cube_nz.jpg');
     
-	skyboxMaterial.backFaceCulling = false;
-	skyboxMaterial.reflectionTexture = new Texture(roughnessTexture, scene);
+    skyboxMaterial.backFaceCulling = false;
+    skyboxMaterial.reflectionTexture = new CubeTexture(
+        '../assets/textures/sky/sky_cube',
+        scene,
+        null,
+        null,
+        [
+            pxTexture,
+            pyTexture,
+            pzTexture,
+            nxTexture,
+            nyTexture,
+            nzTexture,
+        ],
+    );
 	skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	skyboxMaterial.specularColor = new Color3(0, 0, 0);
