@@ -29,12 +29,11 @@ class SceneComponent extends React.Component {
       adaptToDeviceRatio,
     );
 
-    const scene = new Scene(this.engine);
-    this.scene = scene;
+    this.scene = new Scene(this.engine);
 
     if (typeof onSceneMount === 'function') {
       onSceneMount({
-        scene,
+        scene: this.scene,
         engine: this.engine,
         canvas: this.canvas,
       });

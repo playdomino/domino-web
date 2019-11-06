@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as CANNON from 'cannon';
 import '@babylonjs/inspector';
 import { 
 	FreeCamera,
@@ -10,6 +11,7 @@ import {
 	DirectionalLight,
 	ActionManager,
 	ExecuteCodeAction,
+	PhysicsImpostor,
 } from '@babylonjs/core';
 
 import SceneComponent from '../SceneComponent/SceneComponent'; // import the component above linking to file we just created.
@@ -94,20 +96,19 @@ class SceneLoader extends React.Component {
 		skybox.material = getSkyBoxMaterial(scene);
 
 		// physics
+		scene.enablePhysics();		
 		scene.gravity = new Vector3(0, -9.81, 0);
 		scene.collisionsEnabled = true;
 		
+		sphere1.physicsImpostor = new PhysicsImpostor(sphere1, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
+		sphere2.physicsImpostor = new PhysicsImpostor(sphere2, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);		
+		ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
+
 		// collisions
 		ground.checkCollisions = true;
 		camera.checkCollisions = true;
-		sphere1.checkCollisions = true;
-		sphere2.checkCollisions = true;
 
 		let cameraForwardRayPosition = camera.getForwardRay().direction;
-
-		scene.registerBeforeRender(function() {
-			cameraForwardRayPosition = camera.getForwardRay().direction;
-		});
 
 		// control
 		let wPress = new ExecuteCodeAction(
@@ -115,9 +116,9 @@ class SceneLoader extends React.Component {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: "w"
 			},
-			() => { 
-				sphere1.position.x += cameraForwardRayPosition.x + 1;
-				sphere1.position.z += cameraForwardRayPosition.z + 1;
+			() => {
+				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x + 1, 10, cameraForwardRayPosition.z + 1), 
+				sphere1.getAbsolutePosition());
 			}
 		)
 
