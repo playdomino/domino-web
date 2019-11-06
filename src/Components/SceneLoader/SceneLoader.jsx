@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as CANNON from 'cannon';
 import '@babylonjs/inspector';
 import { 
 	FreeCamera,
@@ -24,6 +23,7 @@ import {
 
 const grassDisplacement = require('../../assets/textures/grass/Grass_001_DISP.png');
 const rockDisplacement = require('../../assets/textures/rock/Rock_028_DISP.png');
+window.CANNON = require( 'cannon' );
 
 class SceneLoader extends React.Component {
 	constructor(props) {
@@ -73,16 +73,36 @@ class SceneLoader extends React.Component {
 		sphere1.material = getRockMaterial(scene, 3);
 		sphere2.material = getRockMaterial(scene, 3);
 
-		// Move the sphere upward 1/2 its height
-		sphere1.position.y = 1;
-		sphere1.position.x = 1.5;
-		sphere1.rotate(new Vector3(1, 0, 0), 1);
-		sphere1.rotate(new Vector3(0, 1, 0), 1);
-		sphere2.position.y = 1;
-		sphere2.position.x = -1;
+		// physics
+		scene.enablePhysics();		
+		scene.gravity = new Vector3(0, -9.81, 0);
+		scene.collisionsEnabled = true;
+		
+		sphere1.physicsImpostor = new PhysicsImpostor(sphere1, PhysicsImpostor.SphereImpostor, { mass: 2, restitution: 0.8 }, scene);
+		sphere2.physicsImpostor = new PhysicsImpostor(sphere2, PhysicsImpostor.SphereImpostor, { mass: 2, restitution: 0.8 }, scene);		
+				
+		const setInitialPosition = () => {
+			// Move the sphere upward 1/2 its height
+			sphere1.position.y = 4;
+			sphere1.position.x = 1.5;
+			sphere1.position.z = 0;
+			sphere1.rotate(new Vector3(1, 0, 0), 1);
+			sphere2.position.y = 4;
+			sphere2.position.x = -1;
+			sphere2.position.z = 0;
+			sphere2.rotate(new Vector3(0, 1, 0), 1);
+			sphere1.physicsImpostor.setAngularVelocity( Vector3.Zero() );
+			sphere1.physicsImpostor.setLinearVelocity( Vector3.Zero() );
+			sphere2.physicsImpostor.setAngularVelocity( Vector3.Zero() );
+			sphere2.physicsImpostor.setLinearVelocity( Vector3.Zero() );
+		}
+
+		setInitialPosition();
 
 		// Our built-in 'ground' shape. Params: name, width, depth, subdivs, scene
-		const ground = Mesh.CreateGroundFromHeightMap("ground1", grassDisplacement, 20, 20, 100, 0, 0.3, scene);
+		const ground = Mesh.CreateGroundFromHeightMap("ground1", grassDisplacement, 20, 20, 100, 0, 0.3, scene, false, () => {
+			ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.HeightmapImpostor, { mass: 0, restitution: 0.2 }, scene);	
+		});
 		ground.material = getGrassMaterial(scene, 10, 1);
 		ground.receiveShadows = true;
 
@@ -95,20 +115,13 @@ class SceneLoader extends React.Component {
 		skybox.infiniteDistance = true;
 		skybox.material = getSkyBoxMaterial(scene);
 
-		// physics
-		scene.enablePhysics();		
-		scene.gravity = new Vector3(0, -9.81, 0);
-		scene.collisionsEnabled = true;
-		
-		sphere1.physicsImpostor = new PhysicsImpostor(sphere1, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);
-		sphere2.physicsImpostor = new PhysicsImpostor(sphere2, PhysicsImpostor.SphereImpostor, { mass: 1, restitution: 0.9 }, scene);		
-		ground.physicsImpostor = new PhysicsImpostor(ground, PhysicsImpostor.BoxImpostor, { mass: 0, restitution: 0.9 }, scene);
-
 		// collisions
 		ground.checkCollisions = true;
+		// sphere1.checkCollisions = true;
+		// sphere2.checkCollisions = true;
 		camera.checkCollisions = true;
 
-		let cameraForwardRayPosition = camera.getForwardRay().direction;
+		let cameraForwardRayPosition;
 
 		// control
 		let wPress = new ExecuteCodeAction(
@@ -117,7 +130,7 @@ class SceneLoader extends React.Component {
 				parameter: "w"
 			},
 			() => {
-				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x + 1, 10, cameraForwardRayPosition.z + 1), 
+				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x + 1, 0, cameraForwardRayPosition.z + 1), 
 				sphere1.getAbsolutePosition());
 			}
 		)
@@ -128,7 +141,8 @@ class SceneLoader extends React.Component {
 				parameter: "a"
 			},
 			() => { 
-				sphere1.position.z += 1;
+				sphere1.applyImpulse(new Vector3(0, 0, cameraForwardRayPosition.z + 1), 
+				sphere1.getAbsolutePosition());
 			}
 		)
 
@@ -138,8 +152,8 @@ class SceneLoader extends React.Component {
 				parameter: "s"
 			},
 			() => { 
-				sphere1.position.x += cameraForwardRayPosition.x - 1;
-				sphere1.position.z += cameraForwardRayPosition.z - 1;
+				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x - 1, 0, cameraForwardRayPosition.z - 1), 
+				sphere1.getAbsolutePosition());
 			}
 		)
 
@@ -148,7 +162,10 @@ class SceneLoader extends React.Component {
 				trigger: ActionManager.OnKeyDownTrigger,
 				parameter: "d"
 			},
-			() => sphere1.position.z -= 1,
+			() => { 
+				sphere1.applyImpulse(new Vector3(0, 0, cameraForwardRayPosition.z - 1), 
+				sphere1.getAbsolutePosition());
+			}
 		)
 		
 		window.addEventListener("keypress", (event) => {
@@ -166,8 +183,16 @@ class SceneLoader extends React.Component {
 			}
 		});
 
+		scene.registerBeforeRender(() => {
+			cameraForwardRayPosition = camera.getForwardRay().direction;
+
+			if (sphere1.position.y < -20 || sphere2.position.y < -20) {
+				setInitialPosition();
+			}
+		});
 		engine.runRenderLoop(() => {
 			if (scene) {
+				
 				scene.render();
 				this.setState({ fpsCounter: engine.getFps().toFixed() + " fps"});
 			}
