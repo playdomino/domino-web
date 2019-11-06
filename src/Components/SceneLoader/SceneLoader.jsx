@@ -11,6 +11,9 @@ import {
 	ActionManager,
 	ExecuteCodeAction,
 	PhysicsImpostor,
+	Matrix,
+	Quaternion,
+	Tools,
 } from '@babylonjs/core';
 
 import SceneComponent from '../SceneComponent/SceneComponent'; // import the component above linking to file we just created.
@@ -31,6 +34,8 @@ class SceneLoader extends React.Component {
 
 		this.state = {
 			fpsCounter: 0,
+			score1: 0,
+			score2: 0,
 		}
 	}
 
@@ -65,10 +70,10 @@ class SceneLoader extends React.Component {
 		light2.intensity = 0.5;
 
 		// Our built-in 'sphere' shape. Params: name, subdivs, size, scene
-		const sphere1 = Mesh.CreateSphere("sphere1", 60, 1, scene, true);
-		sphere1.applyDisplacementMap(rockDisplacement, 0, 0.8);
-		const sphere2 = Mesh.CreateSphere("sphere2", 60, 1, scene, true);
-		sphere2.applyDisplacementMap(rockDisplacement, 0, 0.8);
+		const sphere1 = Mesh.CreateSphere("sphere1", 60, 2, scene, true);
+		sphere1.applyDisplacementMap(rockDisplacement, -0.5, 0.2);
+		const sphere2 = Mesh.CreateSphere("sphere2", 60, 2, scene, true);
+		sphere2.applyDisplacementMap(rockDisplacement, -0.5, 0.2);
 
 		sphere1.material = getRockMaterial(scene, 3);
 		sphere2.material = getRockMaterial(scene, 3);
@@ -124,75 +129,84 @@ class SceneLoader extends React.Component {
 		let cameraForwardRayPosition;
 
 		// control
-		let wPress = new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: "w"
-			},
-			() => {
-				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x + 1, 0, cameraForwardRayPosition.z + 1), 
-				sphere1.getAbsolutePosition());
+		let wPress = (mesh, impulseIntensity) => {
+			mesh.applyImpulse(new Vector3(cameraForwardRayPosition.x + impulseIntensity, 0, cameraForwardRayPosition.z + impulseIntensity), 
+			mesh.getAbsolutePosition());
+		}
+		let sPress = (mesh, impulseIntensity) => {
+			mesh.applyImpulse(new Vector3(-cameraForwardRayPosition.x - impulseIntensity, 0, -cameraForwardRayPosition.z - impulseIntensity), 
+			mesh.getAbsolutePosition());
+		}
+		let aPress = (mesh, impulseIntensity) => {
+			mesh.applyImpulse(new Vector3(-cameraForwardRayPosition.x - impulseIntensity, 0, cameraForwardRayPosition.z + impulseIntensity), 
+			mesh.getAbsolutePosition());
+		}
+		let dPress = (mesh, impulseIntensity) => {
+			mesh.applyImpulse(new Vector3(cameraForwardRayPosition.x + impulseIntensity, 0, -cameraForwardRayPosition.z - impulseIntensity), 
+			mesh.getAbsolutePosition());
+		}
+		let fPress = (mesh, impulseIntensity) => {
+			if (mesh.position.y > -1 && mesh.position.y < 1.5) {
+				mesh.applyImpulse(new Vector3(0, 15, 0), 
+				mesh.getAbsolutePosition());
 			}
-		)
+		}
 
-		let aPress = new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: "a"
-			},
-			() => { 
-				sphere1.applyImpulse(new Vector3(0, 0, cameraForwardRayPosition.z + 1), 
-				sphere1.getAbsolutePosition());
-			}
-		)
-
-		let sPress = new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: "s"
-			},
-			() => { 
-				sphere1.applyImpulse(new Vector3(cameraForwardRayPosition.x - 1, 0, cameraForwardRayPosition.z - 1), 
-				sphere1.getAbsolutePosition());
-			}
-		)
-
-		let dPress = new ExecuteCodeAction(
-			{
-				trigger: ActionManager.OnKeyDownTrigger,
-				parameter: "d"
-			},
-			() => { 
-				sphere1.applyImpulse(new Vector3(0, 0, cameraForwardRayPosition.z - 1), 
-				sphere1.getAbsolutePosition());
-			}
-		)
 		
 		window.addEventListener("keypress", (event) => {
+			const forceIntensity = 2;
+
 			if (event.key === "w") {
-				wPress.execute();
+				wPress(sphere1, forceIntensity);
 			}
 			if (event.key === "a") {
-				aPress.execute();
+				aPress(sphere1, forceIntensity);
 			}
 			if (event.key === "s") {
-				sPress.execute();
+				sPress(sphere1, forceIntensity);
 			}
 			if (event.key === "d") {
-				dPress.execute();
+				dPress(sphere1, forceIntensity);
+			}
+			if (event.key === "f") {
+				fPress(sphere1, forceIntensity);
+			}
+
+			if (event.key === "i") {
+				wPress(sphere2, forceIntensity);
+			}
+			if (event.key === "j") {
+				aPress(sphere2, forceIntensity);
+			}
+			if (event.key === "k") {
+				sPress(sphere2, forceIntensity);
+			}
+			if (event.key === "l") {
+				dPress(sphere2, forceIntensity);
+			}
+			if (event.key === ";") {
+				fPress(sphere2, forceIntensity);
 			}
 		});
 
 		scene.registerBeforeRender(() => {
+			const {
+				score1,
+				score2,
+			} = this.state;
+
 			cameraForwardRayPosition = camera.getForwardRay().direction;
 
 			if (sphere1.position.y < -20 || sphere2.position.y < -20) {
+				this.setState({
+					score1: sphere2.position.y < -20 ? score1 + 1 : score1,
+					score2: sphere1.position.y < -20 ? score2 + 1 : score2,
+				});
 				setInitialPosition();
 			}
 		});
 		engine.runRenderLoop(() => {
 			if (scene) {
-				
 				scene.render();
 				this.setState({ fpsCounter: engine.getFps().toFixed() + " fps"});
 			}
@@ -202,10 +216,20 @@ class SceneLoader extends React.Component {
 	render() {
 		const {
 			fpsCounter,
+			score1,
+			score2,
 		} = this.state;   
 
 		return <>
-			<div className="fps-counter">{fpsCounter}</div>
+			<div className="fps-counter">
+				<div>{fpsCounter}</div>
+				<br/>
+				<div>Player 1: {score1}</div>
+				<div>w a s d and f to jump</div>
+				<br />
+				<div>Player 2: {score2}</div>
+				<div>i j k l and ; to jump</div>
+			</div>
 			<SceneComponent onSceneMount={this.onSceneMount} />
 		</>
 	}
