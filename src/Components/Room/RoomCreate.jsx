@@ -39,7 +39,7 @@ class RoomCreate extends Component {
                 <br />
                 <label htmlFor="playerName">Player Name:</label>
                 <input id="playerName" value={this.state.playerName} type="text" />
-                <button>Create</button>
+                <a href="/roomwaiting">Create</a>
             </div>
         );
     }
