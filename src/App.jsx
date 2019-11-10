@@ -8,6 +8,7 @@ import {
   Route,
 } from "react-router-dom";
 import RoomWaiting from './Components/Room/RoomWaiting';
+import RoomJoin from './Components/Room/RoomJoin';
 
 function App() {
   return (
@@ -20,8 +21,8 @@ function App() {
             <Route path="/room">
               <Room />
             </Route>
-            <Route path="/roomwaiting">
-              <RoomWaiting/>
+            <Route path="/room-join">
+              <RoomJoin/>
             </Route>
             <Route path="/game">
               <SceneLoader />

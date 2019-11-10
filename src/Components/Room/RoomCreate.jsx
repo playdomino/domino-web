@@ -1,11 +1,16 @@
 import React, { Component } from 'react';
+import * as signalR from '@aspnet/signalr';
 
 class RoomCreate extends Component {
     constructor(props) {
         super(props);
+
         this.state = {
+            roomState: 'none',
             roomNumber: '',
-            playerName: ''
+            roomOwnerName: '',
+            roomPlayers: [],
+            connection:null
         }
     }
     capFirst(string) {
@@ -22,26 +27,79 @@ class RoomCreate extends Component {
         var name = this.capFirst(name1[this.getRandomInt(0, name1.length + 1)]) + ' ' + this.capFirst(name2[this.getRandomInt(0, name2.length + 1)]);
         return name;
     }
+
+    createRoom = () => {
+
+
+        this.state.connection.invoke('JoinRoomAction', this.state.roomNumber, this.state.roomOwnerName, 'confirmed').then(() => {
+
+        });
+        this.setState({
+            roomState: 'waiting'
+        })
+
+    }
+    joinRoom = (userId,name,status) => {
+        this.setState(state => ({
+            roomPlayers: [...state.roomPlayers, { userId, name, status }]
+        }))
+    }
     componentDidMount() {
+        var connection = new signalR.HubConnectionBuilder().withUrl("http://domino.bryht.net:8080/room", {
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets
+        }).build();
         var radom = Math.floor(100000 + Math.random() * 900000);
         this.setState({
             roomNumber: radom,
-            playerName: this.generateName()
+            roomOwnerName: this.generateName(),
+            connection: connection
+        }, () => {
+       
+            this.state.connection.on("JoinRoom", function (userId, name, status) {
+                console.log(userId, name, status);
+                this.joinRoom(userId,name,status);
+            });
+    
+            this.state.connection.start().then(function () {
+                console.log('Connection started!');
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
         });
+       
+
+
     }
 
-    
+
     render() {
-        return (
-            <div>
-                <label htmlFor="roomNumber">Room Number:</label>
-                <input id="roomNumber" value={this.state.roomNumber} type="text" readOnly />
-                <br />
-                <label htmlFor="playerName">Player Name:</label>
-                <input id="playerName" value={this.state.playerName} type="text" />
-                <a href="/roomwaiting">Create</a>
-            </div>
-        );
+        switch (this.state.roomState) {
+            case 'none':
+                return (
+                    <div>
+                        <label htmlFor="roomNumber">Room Number:</label>
+                        <input id="roomNumber" value={this.state.roomNumber} type="text" readOnly />
+                        <br />
+                        <label htmlFor="playerName">Player Name:</label>
+                        <input id="playerName" value={this.state.roomOwnerName} type="text" readOnly />
+                        <button onClick={this.createRoom}>Create</button>
+                    </div>
+                );
+
+            case 'waiting':
+
+                return (
+                    <div>
+                        <ul>
+                            {(this.state.roomPlayers || []).map(item => (
+                                <li key={item.userId}>{item.userId}+{item.name}+{item.status}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )
+        }
+
     }
 }
 
