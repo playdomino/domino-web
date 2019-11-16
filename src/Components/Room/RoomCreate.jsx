@@ -5,13 +5,20 @@ class RoomCreate extends Component {
     constructor(props) {
         super(props);
 
+        var connection = new signalR.HubConnectionBuilder().withUrl("http://domino.bryht.net:8080/room", {
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets
+        }).build();
+
+        var radom = Math.floor(100000 + Math.random() * 900000);
+
         this.state = {
             roomState: 'none',
-            roomNumber: '',
-            roomOwnerName: '',
+            roomNumber: radom,
+            roomOwnerName: this.generateName(),
             roomPlayers: [],
-            connection:null
-        }
+            connection: connection
+        };
     }
     capFirst(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
@@ -39,36 +46,26 @@ class RoomCreate extends Component {
         })
 
     }
-    joinRoom = (userId,name,status) => {
+
+    joinRoom = (userId, name, status) => {
         this.setState(state => ({
             roomPlayers: [...state.roomPlayers, { userId, name, status }]
         }))
     }
-    componentDidMount() {
-        var connection = new signalR.HubConnectionBuilder().withUrl("http://domino.bryht.net:8080/room", {
-            skipNegotiation: true,
-            transport: signalR.HttpTransportType.WebSockets
-        }).build();
-        var radom = Math.floor(100000 + Math.random() * 900000);
-        this.setState({
-            roomNumber: radom,
-            roomOwnerName: this.generateName(),
-            connection: connection
-        }, () => {
-       
-            this.state.connection.on("JoinRoom", function (userId, name, status) {
-                console.log(userId, name, status);
-                this.joinRoom(userId,name,status);
-            });
-    
-            this.state.connection.start().then(function () {
-                console.log('Connection started!');
-            }).catch(function (err) {
-                return console.error(err.toString());
-            });
-        });
-       
 
+    componentDidMount() {
+
+        this.state.connection.on("JoinRoom", (userId, name, status) => {
+            console.log(userId, name, status);
+           
+            this.joinRoom(userId, name, status);
+        });
+
+        this.state.connection.start().then(function () {
+            console.log('Connection started!');
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
 
     }
 
@@ -91,6 +88,7 @@ class RoomCreate extends Component {
 
                 return (
                     <div>
+                        <h2>{this.state.roomNumber}</h2>
                         <ul>
                             {(this.state.roomPlayers || []).map(item => (
                                 <li key={item.userId}>{item.userId}+{item.name}+{item.status}</li>

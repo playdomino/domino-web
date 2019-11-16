@@ -7,7 +7,6 @@ import {
   Switch,
   Route,
 } from "react-router-dom";
-import RoomWaiting from './Components/Room/RoomWaiting';
 import RoomJoin from './Components/Room/RoomJoin';
 
 function App() {
@@ -18,10 +17,7 @@ function App() {
       <Router>
         <div>
           <Switch>
-            <Route path="/room">
-              <Room />
-            </Route>
-            <Route path="/room-join">
+            <Route path="/join">
               <RoomJoin/>
             </Route>
             <Route path="/game">
